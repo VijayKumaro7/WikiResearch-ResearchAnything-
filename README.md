@@ -720,9 +720,9 @@ MIT License — free to use, modify, and distribute for personal and commercial 
 ## 👤 Author
 
 **Vijay** — Aspiring Data Analyst & Full-Stack Developer
-- GitHub: *[your-github-url]*
-- LinkedIn: *[your-linkedin-url]*
-- Portfolio: *[your-portfolio-url]*
+- GitHub: *[https://github.com/VijayKumaro7/WikiResearch-ResearchAnything-]*
+- LinkedIn: *[https://www.linkedin.com/in/vijay-kumar070/]*
+
 
 ---
 
