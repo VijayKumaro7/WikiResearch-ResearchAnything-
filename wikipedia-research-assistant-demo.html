@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WikiResearch — Intelligent Wikipedia Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+  <style>/* ============================================
+   WikiResearch — Styles
+   Aesthetic: Editorial Dark / Refined Ink
+   ============================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #0d0d0f;
+  --ink-2: #1a1a1f;
+  --ink-3: #242430;
+  --surface: #16161e;
+  --surface-2: #1e1e2a;
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.15);
+  --text-primary: #f0eee8;
+  --text-secondary: #a09e98;
+  --text-muted: #5a5860;
+  --accent: #d4a84b;
+  --accent-dim: rgba(212, 168, 75, 0.15);
+  --accent-glow: rgba(212, 168, 75, 0.35);
+  --blue: #6eb5ff;
+  --blue-dim: rgba(110, 181, 255, 0.1);
+  --red: #ff6b6b;
+  --green: #6bcb77;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --sidebar-w: 260px;
+  --font-serif: 'Playfair Display', serif;
+  --font-body: 'Source Serif 4', serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* ---- Background ---- */
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+.bg-orb {
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+  filter: blur(100px); opacity: 0.3;
+  animation: orbFloat 12s ease-in-out infinite alternate;
+}
+.orb-1 { width: 500px; height: 500px; background: radial-gradient(circle, #d4a84b22, transparent); top: -100px; right: -100px; animation-delay: 0s; }
+.orb-2 { width: 400px; height: 400px; background: radial-gradient(circle, #6eb5ff18, transparent); bottom: -80px; left: 200px; animation-delay: -6s; }
+
+@keyframes orbFloat {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(30px, 20px) scale(1.1); }
+}
+
+/* ---- App Layout ---- */
+.app-wrapper {
+  display: flex; min-height: 100vh;
+  position: relative; z-index: 1;
+}
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 28px 20px;
+  position: fixed; top: 0; left: 0; bottom: 0;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sidebar-header { margin-bottom: 36px; }
+
+.logo { display: flex; align-items: center; gap: 12px; }
+
+.logo-icon {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--accent), #b8892d);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-weight: 700; font-size: 20px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px var(--accent-glow);
+  flex-shrink: 0;
+}
+
+.logo-text { display: flex; flex-direction: column; }
+.logo-title { font-family: var(--font-serif); font-size: 1.05rem; font-weight: 700; color: var(--text-primary); }
+.logo-sub { font-size: 0.68rem; color: var(--text-muted); font-family: var(--font-mono); letter-spacing: 0.05em; }
+
+.sidebar-nav { display: flex; flex-direction: column; gap: 4px; margin-bottom: 36px; }
+
+.nav-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  background: transparent; border: none; color: var(--text-secondary);
+  cursor: pointer; font-size: 0.88rem; font-family: var(--font-body);
+  text-align: left; transition: var(--transition);
+}
+.nav-btn:hover { background: var(--ink-3); color: var(--text-primary); }
+.nav-btn.active { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(212,168,75,0.25); }
+.nav-btn svg { flex-shrink: 0; }
+
+.sidebar-stats {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px; margin-bottom: 28px;
+  padding: 16px 12px;
+  background: var(--ink-3); border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.stat-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.stat-num { font-family: var(--font-mono); font-size: 1.2rem; color: var(--accent); font-weight: 500; }
+.stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.section-label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; font-family: var(--font-mono); }
+
+.chip-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  background: var(--ink-3); border: 1px solid var(--border);
+  color: var(--text-secondary); border-radius: 20px;
+  padding: 4px 12px; font-size: 0.75rem; font-family: var(--font-mono);
+  cursor: pointer; transition: var(--transition);
+}
+.chip:hover { background: var(--accent-dim); color: var(--accent); border-color: rgba(212,168,75,0.3); }
+
+.sidebar-footer { margin-top: auto; padding-top: 24px; }
+.powered-by { font-size: 0.68rem; color: var(--text-muted); font-family: var(--font-mono); }
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
+.main-content {
+  margin-left: var(--sidebar-w);
+  flex: 1; padding: 40px 48px;
+  max-width: calc(100vw - var(--sidebar-w));
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ---- Header ---- */
+.main-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 36px;
+}
+.header-text h1 {
+  font-family: var(--font-serif);
+  font-size: 2.4rem; font-weight: 400;
+  line-height: 1.2; color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.header-text h1 em { font-style: italic; color: var(--accent); }
+.header-text p { color: var(--text-secondary); font-size: 0.95rem; }
+
+/* ---- Search Zone ---- */
+.search-zone { margin-bottom: 40px; }
+
+.search-bar-wrap {
+  display: flex; align-items: center; gap: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius);
+  padding: 6px 6px 6px 18px;
+  transition: var(--transition);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+}
+.search-bar-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 4px 30px var(--accent-glow);
+}
+
+.search-icon { color: var(--text-muted); flex-shrink: 0; }
+
+.search-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  color: var(--text-primary); font-family: var(--font-body);
+  font-size: 1rem; padding: 10px 16px;
+}
+.search-input::placeholder { color: var(--text-muted); }
+
+.search-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, var(--accent), #b8892d);
+  color: var(--ink); border: none; border-radius: 8px;
+  padding: 10px 20px; font-weight: 600; font-size: 0.88rem;
+  cursor: pointer; transition: var(--transition); white-space: nowrap;
+  font-family: var(--font-mono);
+}
+.search-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
+.search-btn:active { transform: translateY(0); }
+.search-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.search-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; font-family: var(--font-mono); padding-left: 4px; }
+
+/* ============================================
+   STATES
+   ============================================ */
+.hidden { display: none !important; }
+
+/* Loading */
+.loading-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 80px 20px; gap: 20px;
+}
+.loader-rings {
+  position: relative; width: 64px; height: 64px;
+}
+.ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 2px solid transparent;
+  animation: spin 1.4s linear infinite;
+}
+.ring-1 { border-top-color: var(--accent); animation-duration: 1.4s; }
+.ring-2 { inset: 8px; border-top-color: var(--blue); animation-duration: 1.0s; animation-direction: reverse; }
+.ring-3 { inset: 16px; border-top-color: rgba(212,168,75,0.4); animation-duration: 0.7s; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text { font-size: 1rem; color: var(--text-secondary); }
+.loading-sub { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); }
+
+/* Error */
+.error-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 80px 20px; gap: 12px; text-align: center;
+}
+.error-icon { font-size: 2.5rem; color: var(--red); }
+.error-title { font-family: var(--font-serif); font-size: 1.4rem; color: var(--text-primary); }
+.error-msg { color: var(--text-secondary); max-width: 400px; }
+.retry-btn {
+  margin-top: 12px; padding: 10px 28px;
+  background: var(--ink-3); border: 1px solid var(--border-hover);
+  color: var(--text-primary); border-radius: var(--radius-sm);
+  cursor: pointer; font-family: var(--font-mono); font-size: 0.85rem;
+  transition: var(--transition);
+}
+.retry-btn:hover { background: var(--surface-2); border-color: var(--accent); color: var(--accent); }
+
+/* Empty State */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 60px 20px; gap: 16px; text-align: center;
+}
+.empty-visual {
+  position: relative; width: 120px; height: 120px; margin-bottom: 12px;
+}
+.empty-circle {
+  position: absolute; border-radius: 50%; border: 1px solid;
+  animation: pulse 3s ease-in-out infinite;
+}
+.c1 { inset: 0; border-color: rgba(212,168,75,0.3); animation-delay: 0s; }
+.c2 { inset: 16px; border-color: rgba(110,181,255,0.25); animation-delay: -1s; }
+.c3 { inset: 32px; border-color: rgba(212,168,75,0.15); animation-delay: -2s; }
+.empty-w {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-serif); font-size: 3rem; font-weight: 700; color: var(--accent);
+  text-shadow: 0 0 40px var(--accent-glow);
+}
+@keyframes pulse { 0%,100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 1; transform: scale(1.03); } }
+
+.empty-state h2 { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 400; color: var(--text-primary); }
+.empty-state p { color: var(--text-secondary); max-width: 440px; line-height: 1.7; }
+
+.example-queries { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; width: 100%; max-width: 480px; }
+.example-label { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); text-align: left; }
+.example-q {
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-secondary); text-align: left; padding: 12px 16px;
+  border-radius: var(--radius-sm); cursor: pointer; font-family: var(--font-body);
+  font-size: 0.88rem; transition: var(--transition);
+}
+.example-q:hover { border-color: var(--accent); color: var(--text-primary); background: var(--accent-dim); padding-left: 20px; }
+
+/* ============================================
+   RESULTS
+   ============================================ */
+.results-area { animation: fadeUp 0.4s ease; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.results-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px; margin-bottom: 28px;
+}
+.results-badge {
+  font-family: var(--font-mono); font-size: 0.68rem; font-weight: 500;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid rgba(212,168,75,0.3); border-radius: 20px;
+  padding: 3px 10px; display: inline-block; margin-bottom: 8px;
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.results-title {
+  font-family: var(--font-serif); font-size: 1.9rem; font-weight: 700;
+  color: var(--text-primary); line-height: 1.2;
+}
+
+.results-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.action-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  background: var(--ink-3); border: 1px solid var(--border);
+  color: var(--text-secondary); font-size: 0.82rem; font-family: var(--font-mono);
+  cursor: pointer; transition: var(--transition); text-decoration: none;
+}
+.action-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+.action-btn.saved { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+/* Summary Card */
+.summary-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin-bottom: 28px;
+  position: relative; overflow: hidden;
+}
+.summary-card::before {
+  content: '"';
+  position: absolute; top: 12px; right: 24px;
+  font-family: var(--font-serif); font-size: 6rem;
+  color: rgba(212,168,75,0.06); line-height: 1;
+}
+.summary-label {
+  font-family: var(--font-mono); font-size: 0.68rem; font-weight: 500;
+  color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+.summary-text {
+  color: var(--text-primary); font-size: 1.02rem;
+  line-height: 1.8; font-weight: 300;
+}
+
+/* Sections */
+.sections-area { display: flex; flex-direction: column; gap: 16px; margin-bottom: 28px; }
+
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; transition: var(--transition);
+}
+.section-card:hover { border-color: var(--border-hover); }
+
+.section-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; cursor: pointer; width: 100%;
+  background: none; border: none; color: var(--text-primary); text-align: left;
+}
+.section-toggle-title {
+  font-family: var(--font-serif); font-size: 1.05rem;
+  color: var(--text-primary); font-weight: 600;
+}
+.section-toggle-icon {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--ink-3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: var(--transition); color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.section-toggle:hover .section-toggle-icon { border-color: var(--accent); color: var(--accent); }
+
+.section-body {
+  padding: 0 20px 20px; display: none;
+  color: var(--text-secondary); font-size: 0.92rem; line-height: 1.8;
+}
+.section-body.open { display: block; animation: fadeIn 0.2s ease; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Related */
+.related-area { margin-bottom: 32px; }
+.related-title { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+.related-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.related-chip {
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-secondary); border-radius: 20px;
+  padding: 6px 14px; font-size: 0.8rem; font-family: var(--font-body);
+  cursor: pointer; transition: var(--transition);
+}
+.related-chip:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-dim); }
+
+/* ============================================
+   HISTORY & SAVED
+   ============================================ */
+.clear-btn {
+  padding: 8px 18px; border-radius: var(--radius-sm);
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-muted); font-size: 0.8rem; font-family: var(--font-mono);
+  cursor: pointer; transition: var(--transition); flex-shrink: 0;
+}
+.clear-btn:hover { border-color: var(--red); color: var(--red); }
+
+.list-area { display: flex; flex-direction: column; gap: 12px; }
+
+.empty-list { color: var(--text-muted); font-size: 0.9rem; padding: 40px; text-align: center; font-family: var(--font-mono); }
+
+.list-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; transition: var(--transition); cursor: pointer;
+}
+.list-card:hover { border-color: var(--border-hover); background: var(--surface-2); }
+.list-card-left { flex: 1; min-width: 0; }
+.list-card-title { font-family: var(--font-serif); font-size: 1rem; color: var(--text-primary); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-card-sub { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); }
+.list-card-btn {
+  background: var(--ink-3); border: 1px solid var(--border);
+  color: var(--text-muted); border-radius: var(--radius-sm);
+  padding: 6px 12px; font-size: 0.75rem; font-family: var(--font-mono);
+  cursor: pointer; transition: var(--transition); flex-shrink: 0;
+}
+.list-card-btn:hover { border-color: var(--accent); color: var(--accent); }
+.del-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--ink); }
+::-webkit-scrollbar-thumb { background: var(--ink-3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 900px) {
+  .sidebar { width: 220px; }
+  .main-content { margin-left: 220px; padding: 24px; }
+}
+
+@media (max-width: 640px) {
+  .sidebar { position: static; width: 100%; border-right: none; border-bottom: 1px solid var(--border); padding: 20px 16px; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .sidebar-nav { flex-direction: row; }
+  .app-wrapper { flex-direction: column; }
+  .main-content { margin-left: 0; padding: 20px 16px; max-width: 100vw; }
+  .quick-topics { display: none; }
+  .sidebar-stats { display: none; }
+  .sidebar-footer { display: none; }
+}
+</style>
+</head>
+<body>
+
+  <!-- Decorative background -->
+  <div class="bg-grid"></div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <div class="app-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">W</span>
+          <div class="logo-text">
+            <span class="logo-title">WikiResearch</span>
+            <span class="logo-sub">AI-Powered Assistant</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" id="btn-search" onclick="switchTab('search')">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Search
+        </button>
+        <button class="nav-btn" id="btn-history" onclick="switchTab('history')">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+          History
+        </button>
+        <button class="nav-btn" id="btn-saved" onclick="switchTab('saved')">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          Saved
+        </button>
+      </nav>
+
+      <div class="sidebar-stats" id="sidebar-stats">
+        <div class="stat-item">
+          <span class="stat-num" id="stat-queries">0</span>
+          <span class="stat-label">Queries</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num" id="stat-saved">0</span>
+          <span class="stat-label">Saved</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num" id="stat-topics">0</span>
+          <span class="stat-label">Topics</span>
+        </div>
+      </div>
+
+      <div class="quick-topics">
+        <p class="section-label">Quick Topics</p>
+        <div class="chip-grid">
+          <button class="chip" onclick="quickSearch('Artificial Intelligence')">AI</button>
+          <button class="chip" onclick="quickSearch('Quantum Computing')">Quantum</button>
+          <button class="chip" onclick="quickSearch('Climate Change')">Climate</button>
+          <button class="chip" onclick="quickSearch('Space Exploration')">Space</button>
+          <button class="chip" onclick="quickSearch('Blockchain')">Blockchain</button>
+          <button class="chip" onclick="quickSearch('Machine Learning')">ML</button>
+          <button class="chip" onclick="quickSearch('DNA')">DNA</button>
+          <button class="chip" onclick="quickSearch('Renaissance')">History</button>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <span class="powered-by">Powered by Wikipedia API</span>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Search Tab -->
+      <div class="tab-panel active" id="tab-search">
+        <header class="main-header">
+          <div class="header-text">
+            <h1>Research <em>Anything</em></h1>
+            <p>Ask questions. Get answers from Wikipedia, intelligently surfaced.</p>
+          </div>
+        </header>
+
+        <div class="search-zone">
+          <div class="search-bar-wrap">
+            <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input
+              type="text"
+              id="main-search"
+              class="search-input"
+              placeholder="Ask anything — 'How does CRISPR work?' or 'Who invented the internet?'"
+              autocomplete="off"
+            />
+            <button class="search-btn" id="search-btn" onclick="handleSearch()">
+              <span class="btn-text">Search</span>
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+          <div class="search-hint" id="search-hint">Press Enter or click Search to query Wikipedia</div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading-state hidden" id="loading-state">
+          <div class="loader-rings">
+            <div class="ring ring-1"></div>
+            <div class="ring ring-2"></div>
+            <div class="ring ring-3"></div>
+          </div>
+          <p class="loading-text">Fetching from Wikipedia…</p>
+          <p class="loading-sub" id="loading-topic"></p>
+        </div>
+
+        <!-- Error -->
+        <div class="error-state hidden" id="error-state">
+          <div class="error-icon">⚠</div>
+          <h3 class="error-title">No results found</h3>
+          <p class="error-msg" id="error-msg">Try a different search term or rephrase your question.</p>
+          <button class="retry-btn" onclick="clearResults()">Try Again</button>
+        </div>
+
+        <!-- Results -->
+        <div class="results-area hidden" id="results-area">
+          <div class="results-header">
+            <div class="results-meta">
+              <span class="results-badge">Wikipedia</span>
+              <h2 class="results-title" id="results-title"></h2>
+            </div>
+            <div class="results-actions">
+              <button class="action-btn" id="save-btn" onclick="saveCurrentResult()" title="Save Result">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                Save
+              </button>
+              <a class="action-btn" id="wiki-link" href="#" target="_blank" title="Open Wikipedia">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Wikipedia
+              </a>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <div class="summary-label">Summary</div>
+            <div class="summary-text" id="summary-text"></div>
+          </div>
+
+          <div class="sections-area" id="sections-area"></div>
+
+          <div class="related-area" id="related-area"></div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state">
+          <div class="empty-visual">
+            <div class="empty-circle c1"></div>
+            <div class="empty-circle c2"></div>
+            <div class="empty-circle c3"></div>
+            <span class="empty-w">W</span>
+          </div>
+          <h2>Start your research</h2>
+          <p>Type any topic, question, or concept above.<br>WikiResearch pulls structured knowledge from Wikipedia instantly.</p>
+          <div class="example-queries">
+            <p class="example-label">Try asking:</p>
+            <button class="example-q" onclick="fillSearch('What is quantum entanglement?')">What is quantum entanglement?</button>
+            <button class="example-q" onclick="fillSearch('History of the Roman Empire')">History of the Roman Empire</button>
+            <button class="example-q" onclick="fillSearch('How does machine learning work?')">How does machine learning work?</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Tab -->
+      <div class="tab-panel" id="tab-history">
+        <header class="main-header">
+          <div class="header-text">
+            <h1>Search <em>History</em></h1>
+            <p>Your previous research sessions.</p>
+          </div>
+          <button class="clear-btn" onclick="clearHistory()">Clear All</button>
+        </header>
+        <div class="list-area" id="history-list">
+          <div class="empty-list">No searches yet. Start researching!</div>
+        </div>
+      </div>
+
+      <!-- Saved Tab -->
+      <div class="tab-panel" id="tab-saved">
+        <header class="main-header">
+          <div class="header-text">
+            <h1>Saved <em>Articles</em></h1>
+            <p>Articles you've bookmarked for later.</p>
+          </div>
+          <button class="clear-btn" onclick="clearSaved()">Clear All</button>
+        </header>
+        <div class="list-area" id="saved-list">
+          <div class="empty-list">No saved articles yet.</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>/**
+ * WikiResearch — Main Application
+ * Wikipedia Research Assistant
+ * 
+ * Architecture:
+ *  - WikipediaService  : Handles all API calls to Wikipedia REST API
+ *  - StorageService    : Manages localStorage for history & saved articles
+ *  - UIController      : Controls DOM updates, rendering, tab switching
+ *  - App               : Entry point, wires everything together
+ */
+
+/* ============================================================
+   WIKIPEDIA SERVICE
+   Handles fetching from Wikipedia's REST API (no API key needed)
+   ============================================================ */
+const WikipediaService = (() => {
+  const BASE = 'https://en.wikipedia.org/api/rest_v1';
+  const SEARCH_BASE = 'https://en.wikipedia.org/w/api.php';
+
+  /**
+   * Search for Wikipedia articles matching a query
+   * @param {string} query
+   * @returns {Promise<Array>} Array of search result objects
+   */
+  async function search(query) {
+    const params = new URLSearchParams({
+      action: 'query',
+      list: 'search',
+      srsearch: query,
+      srlimit: 5,
+      format: 'json',
+      origin: '*'
+    });
+    let res;
+    try {
+      res = await fetch(`${SEARCH_BASE}?${params}`);
+    } catch (err) {
+      // fetch() itself threw — network unreachable, CORS on file://, etc.
+      throw new TypeError('NETWORK_ERROR');
+    }
+    if (!res.ok) throw new Error(`Search failed: ${res.status}`);
+    const data = await res.json();
+    return data.query?.search || [];
+  }
+
+  /**
+   * Fetch full article summary from Wikipedia
+   * Follows redirects automatically via the REST API.
+   * Falls back to MediaWiki extracts API if REST summary fails.
+   * @param {string} title - Exact Wikipedia page title
+   * @returns {Promise<Object>} Summary object with extract, etc.
+   */
+  async function getSummary(title) {
+    const encoded = encodeURIComponent(title.replace(/ /g, '_'));
+
+    // Primary: REST v1 summary (fast, structured)
+    try {
+      const res = await fetch(`${BASE}/page/summary/${encoded}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // REST API may return a disambiguation or redirect page with no extract
+        if (data.extract && data.extract.trim().length > 0) return data;
+      }
+    } catch (_) { /* fall through to backup */ }
+
+    // Fallback: MediaWiki extracts API
+    const params = new URLSearchParams({
+      action: 'query',
+      titles: title,
+      prop: 'extracts|info',
+      exintro: true,
+      explaintext: true,
+      inprop: 'url',
+      redirects: 1,
+      format: 'json',
+      origin: '*'
+    });
+    const res = await fetch(`${SEARCH_BASE}?${params}`);
+    if (!res.ok) throw new Error(`Article not found: ${res.status}`);
+    const data = await res.json();
+    const pages = Object.values(data.query?.pages || {});
+    const page = pages[0];
+    if (!page || page.missing !== undefined) throw new Error('Article not found: 404');
+
+    // Normalize to match REST API shape
+    return {
+      title: page.title,
+      displaytitle: page.title,
+      extract: page.extract || '',
+      thumbnail: null,
+      content_urls: {
+        desktop: { page: page.fullurl || `https://en.wikipedia.org/wiki/${encoded}` }
+      }
+    };
+  }
+
+  /**
+   * Fetch related pages for a given title
+   * @param {string} title
+   * @returns {Promise<Array>} Array of related page titles
+   */
+  async function getRelated(title) {
+    const params = new URLSearchParams({
+      action: 'query',
+      titles: title,
+      prop: 'links',
+      pllimit: 15,
+      plnamespace: 0,
+      format: 'json',
+      origin: '*'
+    });
+    const res = await fetch(`${SEARCH_BASE}?${params}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const pages = Object.values(data.query?.pages || {});
+    return pages[0]?.links?.map(l => l.title) || [];
+  }
+
+  /**
+   * Fetch full article sections/content
+   * @param {string} title
+   * @returns {Promise<Object>} Sections data
+   */
+  async function getSections(title) {
+    const params = new URLSearchParams({
+      action: 'parse',
+      page: title,
+      prop: 'sections|text',
+      format: 'json',
+      origin: '*',
+      disableeditsection: true,
+      disabletoc: true
+    });
+    const res = await fetch(`${SEARCH_BASE}?${params}`);
+    if (!res.ok) return { sections: [] };
+    const data = await res.json();
+    return data.parse || { sections: [] };
+  }
+
+  /**
+   * Main research function: orchestrates search + summary + related
+   * Retries with alternate results if the top hit fails.
+   * @param {string} query - User's question or topic
+   * @returns {Promise<Object>} Full research result
+   */
+  async function research(query) {
+    // Step 1: Search for matching articles
+    let results;
+    try {
+      results = await search(query);
+    } catch (err) {
+      // Distinguish network failure from API error
+      if (err instanceof TypeError) throw new Error('NETWORK_ERROR');
+      throw err;
+    }
+
+    if (!results || results.length === 0) throw new Error('NO_RESULTS');
+
+    // Step 2: Try each result until one succeeds (handles redirects & missing pages)
+    let summary = null;
+    let usedTitle = null;
+    let usedSnippet = '';
+
+    for (let i = 0; i < Math.min(results.length, 3); i++) {
+      const candidate = results[i];
+      try {
+        summary = await getSummary(candidate.title);
+        usedTitle = candidate.title;
+        usedSnippet = candidate.snippet || '';
+        // Ensure we got a usable extract
+        if (summary.extract && summary.extract.trim().length > 30) break;
+      } catch (_) {
+        // Try next result
+      }
+    }
+
+    // If all failed, use the snippet text from search as the extract
+    if (!summary || !summary.extract || summary.extract.trim().length === 0) {
+      const best = results[0];
+      summary = {
+        title: best.title,
+        displaytitle: best.title,
+        extract: stripHTML(best.snippet) || 'No summary available for this article.',
+        thumbnail: null,
+        content_urls: {
+          desktop: { page: `https://en.wikipedia.org/wiki/${encodeURIComponent(best.title.replace(/ /g, '_'))}` }
+        }
+      };
+      usedTitle = best.title;
+    }
+
+    // Step 3: Fetch related (non-blocking, failure is OK)
+    let related = [];
+    try {
+      related = await getRelated(usedTitle || results[0].title);
+    } catch (_) { /* related is optional */ }
+
+    return {
+      query,
+      title: summary.title || usedTitle,
+      displayTitle: summary.displaytitle || summary.title || usedTitle,
+      extract: summary.extract || stripHTML(usedSnippet),
+      thumbnail: summary.thumbnail?.source || null,
+      wikiUrl: summary.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent((usedTitle || '').replace(/ /g, '_'))}`,
+      related: related.slice(0, 10),
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  function stripHTML(html) {
+    const d = document.createElement('div');
+    d.innerHTML = html;
+    return d.textContent || d.innerText || '';
+  }
+
+  return { research, getSections };
+})();
+
+
+/* ============================================================
+   STORAGE SERVICE
+   Manages localStorage for history and saved articles
+   ============================================================ */
+const StorageService = (() => {
+  const KEYS = { HISTORY: 'wiki_history', SAVED: 'wiki_saved' };
+  const MAX_HISTORY = 30;
+
+  function getHistory() {
+    try { return JSON.parse(localStorage.getItem(KEYS.HISTORY) || '[]'); } catch { return []; }
+  }
+
+  function addToHistory(result) {
+    const history = getHistory();
+    // Remove duplicate
+    const filtered = history.filter(h => h.title !== result.title);
+    filtered.unshift({ title: result.title, query: result.query, wikiUrl: result.wikiUrl, timestamp: result.timestamp });
+    localStorage.setItem(KEYS.HISTORY, JSON.stringify(filtered.slice(0, MAX_HISTORY)));
+  }
+
+  function clearHistory() {
+    localStorage.removeItem(KEYS.HISTORY);
+  }
+
+  function getSaved() {
+    try { return JSON.parse(localStorage.getItem(KEYS.SAVED) || '[]'); } catch { return []; }
+  }
+
+  function saveArticle(result) {
+    const saved = getSaved();
+    if (saved.find(s => s.title === result.title)) return false;
+    saved.unshift({ title: result.title, query: result.query, wikiUrl: result.wikiUrl, extract: result.extract?.slice(0, 200), timestamp: new Date().toISOString() });
+    localStorage.setItem(KEYS.SAVED, JSON.stringify(saved));
+    return true;
+  }
+
+  function removeFromSaved(title) {
+    const saved = getSaved().filter(s => s.title !== title);
+    localStorage.setItem(KEYS.SAVED, JSON.stringify(saved));
+  }
+
+  function clearSaved() {
+    localStorage.removeItem(KEYS.SAVED);
+  }
+
+  function isSaved(title) {
+    return getSaved().some(s => s.title === title);
+  }
+
+  return { getHistory, addToHistory, clearHistory, getSaved, saveArticle, removeFromSaved, clearSaved, isSaved };
+})();
+
+
+/* ============================================================
+   UI CONTROLLER
+   Controls all DOM interactions and rendering
+   ============================================================ */
+const UIController = (() => {
+
+  // DOM refs
+  const els = {};
+  let currentResult = null;
+
+  function init() {
+    els.mainSearch = document.getElementById('main-search');
+    els.searchBtn = document.getElementById('search-btn');
+    els.loadingState = document.getElementById('loading-state');
+    els.loadingTopic = document.getElementById('loading-topic');
+    els.errorState = document.getElementById('error-state');
+    els.errorMsg = document.getElementById('error-msg');
+    els.resultsArea = document.getElementById('results-area');
+    els.emptyState = document.getElementById('empty-state');
+    els.resultsTitle = document.getElementById('results-title');
+    els.summaryText = document.getElementById('summary-text');
+    els.sectionsArea = document.getElementById('sections-area');
+    els.relatedArea = document.getElementById('related-area');
+    els.wikiLink = document.getElementById('wiki-link');
+    els.saveBtn = document.getElementById('save-btn');
+    els.historyList = document.getElementById('history-list');
+    els.savedList = document.getElementById('saved-list');
+    els.statQueries = document.getElementById('stat-queries');
+    els.statSaved = document.getElementById('stat-saved');
+    els.statTopics = document.getElementById('stat-topics');
+
+    // Key events
+    els.mainSearch.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleSearch();
+    });
+
+    updateStats();
+  }
+
+  function showState(state) {
+    ['loading-state', 'error-state', 'results-area', 'empty-state'].forEach(id => {
+      document.getElementById(id).classList.add('hidden');
+    });
+    if (state) document.getElementById(state).classList.remove('hidden');
+  }
+
+  function showLoading(topic) {
+    els.loadingTopic.textContent = topic ? `Searching for: "${topic}"` : '';
+    showState('loading-state');
+    els.searchBtn.disabled = true;
+  }
+
+  function showError(msg) {
+    els.errorMsg.textContent = msg || 'Try a different search term.';
+    showState('error-state');
+    els.searchBtn.disabled = false;
+  }
+
+  function showEmpty() {
+    showState('empty-state');
+    els.searchBtn.disabled = false;
+  }
+
+  function renderResult(result) {
+    currentResult = result;
+
+    // Header
+    els.resultsTitle.innerHTML = result.displayTitle || result.title;
+    els.wikiLink.href = result.wikiUrl;
+
+    // Update save button state
+    const saved = StorageService.isSaved(result.title);
+    els.saveBtn.classList.toggle('saved', saved);
+    els.saveBtn.innerHTML = saved
+      ? `<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Saved`
+      : `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Save`;
+
+    // Summary
+    els.summaryText.textContent = result.extract || 'No summary available.';
+
+    // Sections — render intelligently split paragraphs
+    renderSections(result.extract);
+
+    // Related
+    renderRelated(result.related);
+
+    showState('results-area');
+    els.searchBtn.disabled = false;
+  }
+
+  function renderSections(extract) {
+    if (!extract) { els.sectionsArea.innerHTML = ''; return; }
+
+    // Split extract into sentences and group into logical "sections"
+    const sentences = extract.match(/[^.!?]+[.!?]+/g) || [extract];
+    const chunkSize = Math.ceil(sentences.length / Math.min(3, Math.ceil(sentences.length / 5)));
+    const chunks = [];
+    for (let i = 0; i < sentences.length; i += chunkSize) {
+      chunks.push(sentences.slice(i, i + chunkSize).join(' ').trim());
+    }
+
+    const labels = ['Overview', 'Background', 'Key Details', 'Further Context'];
+
+    if (chunks.length <= 1) { els.sectionsArea.innerHTML = ''; return; }
+
+    els.sectionsArea.innerHTML = chunks.map((chunk, i) => `
+      <div class="section-card">
+        <button class="section-toggle" onclick="UIController.toggleSection(this)">
+          <span class="section-toggle-title">${labels[i] || `Section ${i + 1}`}</span>
+          <span class="section-toggle-icon">+</span>
+        </button>
+        <div class="section-body">
+          <p>${chunk}</p>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function toggleSection(btn) {
+    const body = btn.nextElementSibling;
+    const icon = btn.querySelector('.section-toggle-icon');
+    const isOpen = body.classList.toggle('open');
+    icon.textContent = isOpen ? '−' : '+';
+  }
+
+  function renderRelated(related) {
+    if (!related?.length) { els.relatedArea.innerHTML = ''; return; }
+    els.relatedArea.innerHTML = `
+      <p class="related-title">Related Topics</p>
+      <div class="related-chips">
+        ${related.map(t => `<button class="related-chip" onclick="quickSearch('${t.replace(/'/g, "\\'")}')">${t}</button>`).join('')}
+      </div>
+    `;
+  }
+
+  function renderHistoryList() {
+    const history = StorageService.getHistory();
+    if (!history.length) {
+      els.historyList.innerHTML = '<div class="empty-list">No searches yet. Start researching!</div>';
+      return;
+    }
+    els.historyList.innerHTML = history.map(h => `
+      <div class="list-card" onclick="quickSearch('${h.title.replace(/'/g, "\\'")}')">
+        <div class="list-card-left">
+          <div class="list-card-title">${h.title}</div>
+          <div class="list-card-sub">${formatDate(h.timestamp)} · Query: "${h.query}"</div>
+        </div>
+        <button class="list-card-btn" onclick="event.stopPropagation(); quickSearch('${h.title.replace(/'/g, "\\'")}')">Search Again</button>
+      </div>
+    `).join('');
+  }
+
+  function renderSavedList() {
+    const saved = StorageService.getSaved();
+    if (!saved.length) {
+      els.savedList.innerHTML = '<div class="empty-list">No saved articles yet.</div>';
+      return;
+    }
+    els.savedList.innerHTML = saved.map(s => `
+      <div class="list-card">
+        <div class="list-card-left" onclick="quickSearch('${s.title.replace(/'/g, "\\'")}')">
+          <div class="list-card-title">${s.title}</div>
+          <div class="list-card-sub">${formatDate(s.timestamp)}${s.extract ? ` · ${s.extract}…` : ''}</div>
+        </div>
+        <button class="list-card-btn del-btn" onclick="event.stopPropagation(); removeSaved('${s.title.replace(/'/g, "\\'")}')">Remove</button>
+      </div>
+    `).join('');
+  }
+
+  function updateStats() {
+    const history = StorageService.getHistory();
+    const saved = StorageService.getSaved();
+    const topics = new Set(history.map(h => h.title.split(':')[0].trim())).size;
+    if (els.statQueries) els.statQueries.textContent = history.length;
+    if (els.statSaved) els.statSaved.textContent = saved.length;
+    if (els.statTopics) els.statTopics.textContent = topics;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function getSearchQuery() {
+    return els.mainSearch?.value?.trim() || '';
+  }
+
+  function setSearchQuery(q) {
+    if (els.mainSearch) els.mainSearch.value = q;
+  }
+
+  function getCurrentResult() { return currentResult; }
+
+  return {
+    init, showLoading, showError, showEmpty,
+    renderResult, renderHistoryList, renderSavedList,
+    updateStats, getSearchQuery, setSearchQuery, getCurrentResult,
+    toggleSection
+  };
+})();
+
+
+/* ============================================================
+   APP ENTRY POINT
+   Wires everything together
+   ============================================================ */
+let currentTab = 'search';
+
+async function handleSearch() {
+  const query = UIController.getSearchQuery();
+  if (!query) {
+    UIController.showEmpty();
+    return;
+  }
+
+  UIController.showLoading(query);
+
+  try {
+    const result = await WikipediaService.research(query);
+    StorageService.addToHistory(result);
+    UIController.renderResult(result);
+    UIController.updateStats();
+  } catch (err) {
+    console.error('Research error:', err);
+
+    if (err.message === 'NO_RESULTS') {
+      UIController.showError(`No Wikipedia articles found for "${query}". Try rephrasing or use a broader term.`);
+    } else if (err.message === 'NETWORK_ERROR' || err instanceof TypeError) {
+      // TypeError = fetch() itself failed (no network, DNS, CORS on file://, etc.)
+      UIController.showError(
+        'Could not reach Wikipedia. This usually happens when opening the app via file:// — ' +
+        'try running it through a local server (e.g. python -m http.server 3000).'
+      );
+    } else if (err.message && err.message.includes('404')) {
+      UIController.showError(`The article could not be loaded. Try a different search term.`);
+    } else {
+      UIController.showError(`Something went wrong: ${err.message || 'Unknown error'}. Please try again.`);
+    }
+  }
+}
+
+function quickSearch(term) {
+  switchTab('search');
+  UIController.setSearchQuery(term);
+  handleSearch();
+}
+
+function fillSearch(query) {
+  UIController.setSearchQuery(query);
+  document.getElementById('main-search').focus();
+}
+
+function clearResults() {
+  UIController.setSearchQuery('');
+  UIController.showEmpty();
+}
+
+function saveCurrentResult() {
+  const result = UIController.getCurrentResult();
+  if (!result) return;
+  const saved = StorageService.saveArticle(result);
+  if (saved) {
+    UIController.renderResult(result); // re-render to update save btn
+    UIController.updateStats();
+  }
+}
+
+function removeSaved(title) {
+  StorageService.removeFromSaved(title);
+  UIController.renderSavedList();
+  UIController.updateStats();
+}
+
+function clearHistory() {
+  if (confirm('Clear all search history?')) {
+    StorageService.clearHistory();
+    UIController.renderHistoryList();
+    UIController.updateStats();
+  }
+}
+
+function clearSaved() {
+  if (confirm('Clear all saved articles?')) {
+    StorageService.clearSaved();
+    UIController.renderSavedList();
+    UIController.updateStats();
+  }
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.getElementById(`btn-${tab}`).classList.add('active');
+
+  if (tab === 'history') UIController.renderHistoryList();
+  if (tab === 'saved') UIController.renderSavedList();
+}
+
+// Expose UIController for inline onclick
+window.UIController = UIController;
+
+// Boot
+document.addEventListener('DOMContentLoaded', () => {
+  UIController.init();
+  UIController.showEmpty();
+});
+</script>
+</body>
+</html>
