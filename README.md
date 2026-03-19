@@ -14,43 +14,27 @@
 ## 📸 Screenshots
 
 ### Welcome Screen
-![Welcome Screen](docs/screenshots/01_welcome.png)
+![Welcome Screen](Docs/01_welcome.png)
 > *The welcome screen shows the sidebar with Quick Topics chips, live stats panel, and example query buttons to help users get started instantly.*
 
-### Search in Action
-![Search Typed](docs/screenshots/02_search_typed.png)
-> *User types a natural language question into the search bar. The gold focus glow activates on the input field.*
-
 ### Research Results
-![Results Page](docs/screenshots/03_results.png)
+![Results Page](Docs/03_results.png)
 > *A full result for "Artificial Intelligence" — Wikipedia badge, article title, Save/Wikipedia buttons, summary card with the full extract, and collapsible accordion sections below.*
 
 ### Accordion Sections Open
-![Section Open](docs/screenshots/04_section_open.png)
+![Section Open](Docs/04_section_open.png)
 > *Clicking any section header opens a collapsible accordion, breaking the article into readable Overview, Background, and Key Details sections.*
 
-### Article Saved
-![Saved State](docs/screenshots/05_saved_state.png)
-> *After clicking Save, the button changes to a filled gold "Saved" state. The article is persisted to localStorage.*
-
 ### Search History Tab
-![History Tab](docs/screenshots/06_history.png)
+![History Tab](Docs/06_history.png)
 > *The History tab shows all past searches with timestamps, original queries, and "Search Again" buttons. Stats update automatically.*
 
 ### Saved Articles Tab
-![Saved Tab](docs/screenshots/07_saved_tab.png)
+![Saved Tab](Docs/07_saved_tab.png)
 > *The Saved tab lists all bookmarked articles. Each card shows the title, date saved, and a Remove button.*
 
-### Different Topic — Machine Learning
-![ML Results](docs/screenshots/08_ml_results.png)
-> *Searching "Machine Learning" renders a completely fresh result with its own summary, sections, and related topics.*
-
-### Populated Stats
-![With Stats](docs/screenshots/09_with_stats.png)
-> *Sidebar statistics update live — showing 2 queries, 1 saved article, and 1 unique topic explored in this session.*
-
 ### Mobile Responsive View
-![Mobile View](docs/screenshots/10_mobile.png)
+![Mobile View](Docs/10_mobile.png)
 > *On 390px mobile viewport the layout collapses into a single-column view — sidebar moves to the top and all content remains fully usable.*
 
 ---
@@ -157,21 +141,13 @@ wikipedia-research-assistant/
 │   ├── styles.css                      ← Complete stylesheet, zero preprocessors
 │   └── app.js                          ← All logic: Services + UI Controller + App
 │
-├── docs/                               ← Documentation and visual assets
-│   ├── screenshots/                    ← App screenshots (10 views)
-│   │   ├── 01_welcome.png              ← Welcome / empty state
-│   │   ├── 02_search_typed.png         ← Search input with query
-│   │   ├── 03_results.png              ← Full result for Artificial Intelligence
-│   │   ├── 04_section_open.png         ← Accordion section expanded
-│   │   ├── 05_saved_state.png          ← After saving an article
-│   │   ├── 06_history.png              ← History tab with entries
-│   │   ├── 07_saved_tab.png            ← Saved articles tab
-│   │   ├── 08_ml_results.png           ← Machine Learning results
-│   │   ├── 09_with_stats.png           ← Sidebar stats populated
-│   │   └── 10_mobile.png               ← Mobile responsive (390px)
-│   ├── ARCHITECTURE.md                 ← System design, module diagrams, data flow
-│   ├── API_REFERENCE.md                ← Every function documented with examples
-│   └── SETUP.md                        ← Setup, configuration, and deployment guide
+├── Docs/                               ← Documentation and visual assets
+│   ├── 01_welcome.png                  ← Welcome / empty state
+│   ├── 03_results.png                  ← Full result for Artificial Intelligence
+│   ├── 04_section_open.png             ← Accordion section expanded
+│   ├── 06_history.png                  ← History tab with entries
+│   ├── 07_saved_tab.png                ← Saved articles tab
+│   └── 10_mobile.png                   ← Mobile responsive (390px)
 │
 ├── tests/
 │   └── test_plan.md                    ← 40+ test cases + console smoke test script
