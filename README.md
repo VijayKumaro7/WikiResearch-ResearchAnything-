@@ -418,8 +418,8 @@ MIT License — free to use, modify, and distribute.
 
 **Vijay** — Aspiring Data Analyst & Full-Stack Developer
 - GitHub: [VijayKumaro7](https://github.com/VijayKumaro7)
-- LinkedIn: *[your-linkedin-url]*
-- Portfolio: *[your-portfolio-url]*
+- LinkedIn: *[https://www.linkedin.com/in/vijay-kumar070/]*
+- Portfolio: *[https://vijayportfolio07.netlify.app/]*
 
 ---
 
