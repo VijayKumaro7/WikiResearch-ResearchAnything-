@@ -278,6 +278,16 @@ const StorageService = (() => {
    ============================================================ */
 const UIController = (() => {
 
+  // Escape a value for safe use inside an HTML attribute (e.g. onclick='...')
+  function escAttr(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
   // DOM refs
   const els = {};
   let currentResult = null;
@@ -338,8 +348,8 @@ const UIController = (() => {
   function renderResult(result) {
     currentResult = result;
 
-    // Header
-    els.resultsTitle.innerHTML = result.displayTitle || result.title;
+    // Header — use textContent to prevent XSS from API-supplied title data
+    els.resultsTitle.textContent = result.displayTitle || result.title;
     els.wikiLink.href = result.wikiUrl;
 
     // Update save button state
@@ -377,17 +387,27 @@ const UIController = (() => {
 
     if (chunks.length <= 1) { els.sectionsArea.innerHTML = ''; return; }
 
-    els.sectionsArea.innerHTML = chunks.map((chunk, i) => `
-      <div class="section-card">
-        <button class="section-toggle" onclick="UIController.toggleSection(this)">
-          <span class="section-toggle-title">${labels[i] || `Section ${i + 1}`}</span>
-          <span class="section-toggle-icon">+</span>
-        </button>
-        <div class="section-body">
-          <p>${chunk}</p>
-        </div>
-      </div>
-    `).join('');
+    // Build section cards via DOM to avoid injecting raw extract text into innerHTML
+    els.sectionsArea.innerHTML = '';
+    chunks.forEach((chunk, i) => {
+      const card = document.createElement('div');
+      card.className = 'section-card';
+
+      const btn = document.createElement('button');
+      btn.className = 'section-toggle';
+      btn.onclick = () => UIController.toggleSection(btn);
+      btn.innerHTML = `<span class="section-toggle-title">${escAttr(labels[i] || `Section ${i + 1}`)}</span><span class="section-toggle-icon">+</span>`;
+
+      const body = document.createElement('div');
+      body.className = 'section-body';
+      const p = document.createElement('p');
+      p.textContent = chunk;   // textContent — never executes HTML
+      body.appendChild(p);
+
+      card.appendChild(btn);
+      card.appendChild(body);
+      els.sectionsArea.appendChild(card);
+    });
   }
 
   function toggleSection(btn) {
@@ -402,7 +422,7 @@ const UIController = (() => {
     els.relatedArea.innerHTML = `
       <p class="related-title">Related Topics</p>
       <div class="related-chips">
-        ${related.map(t => `<button class="related-chip" onclick="quickSearch('${t.replace(/'/g, "\\'")}')">${t}</button>`).join('')}
+        ${related.map(t => `<button class="related-chip" onclick="quickSearch('${escAttr(t)}')">${escAttr(t)}</button>`).join('')}
       </div>
     `;
   }
@@ -414,12 +434,12 @@ const UIController = (() => {
       return;
     }
     els.historyList.innerHTML = history.map(h => `
-      <div class="list-card" onclick="quickSearch('${h.title.replace(/'/g, "\\'")}')">
+      <div class="list-card" onclick="quickSearch('${escAttr(h.title)}')">
         <div class="list-card-left">
-          <div class="list-card-title">${h.title}</div>
-          <div class="list-card-sub">${formatDate(h.timestamp)} · Query: "${h.query}"</div>
+          <div class="list-card-title">${escAttr(h.title)}</div>
+          <div class="list-card-sub">${escAttr(formatDate(h.timestamp))} · Query: &quot;${escAttr(h.query)}&quot;</div>
         </div>
-        <button class="list-card-btn" onclick="event.stopPropagation(); quickSearch('${h.title.replace(/'/g, "\\'")}')">Search Again</button>
+        <button class="list-card-btn" onclick="event.stopPropagation(); quickSearch('${escAttr(h.title)}')">Search Again</button>
       </div>
     `).join('');
   }
@@ -432,11 +452,11 @@ const UIController = (() => {
     }
     els.savedList.innerHTML = saved.map(s => `
       <div class="list-card">
-        <div class="list-card-left" onclick="quickSearch('${s.title.replace(/'/g, "\\'")}')">
-          <div class="list-card-title">${s.title}</div>
-          <div class="list-card-sub">${formatDate(s.timestamp)}${s.extract ? ` · ${s.extract}…` : ''}</div>
+        <div class="list-card-left" onclick="quickSearch('${escAttr(s.title)}')">
+          <div class="list-card-title">${escAttr(s.title)}</div>
+          <div class="list-card-sub">${escAttr(formatDate(s.timestamp))}${s.extract ? ` · ${escAttr(s.extract)}…` : ''}</div>
         </div>
-        <button class="list-card-btn del-btn" onclick="event.stopPropagation(); removeSaved('${s.title.replace(/'/g, "\\'")}')">Remove</button>
+        <button class="list-card-btn del-btn" onclick="event.stopPropagation(); removeSaved('${escAttr(s.title)}')">Remove</button>
       </div>
     `).join('');
   }
