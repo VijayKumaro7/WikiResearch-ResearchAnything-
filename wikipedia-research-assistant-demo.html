@@ -868,7 +868,7 @@ const WikipediaService = (() => {
     return {
       query,
       title: summary.title || usedTitle,
-      displayTitle: summary.displaytitle || summary.title || usedTitle,
+      displayTitle: stripHTML(summary.displaytitle || summary.title || usedTitle),
       extract: summary.extract || stripHTML(usedSnippet),
       thumbnail: summary.thumbnail?.source || null,
       wikiUrl: summary.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent((usedTitle || '').replace(/ /g, '_'))}`,
@@ -1007,7 +1007,7 @@ const UIController = (() => {
     currentResult = result;
 
     // Header
-    els.resultsTitle.innerHTML = result.displayTitle || result.title;
+    els.resultsTitle.textContent = result.displayTitle || result.title;
     els.wikiLink.href = result.wikiUrl;
 
     // Update save button state

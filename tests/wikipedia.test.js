@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { search, getSummary, getRelated, getSections, research, stripHTML } from '../src/wikipedia.js';
+import {
+  search, getSummary, getRelated, getSections, getFullContent,
+  parseSections, extractIntro, research, stripHTML
+} from '../src/wikipedia.js';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -112,6 +115,92 @@ describe('search', () => {
   it('throws Error when response is not ok', async () => {
     fetch.mockReturnValue(mockResponse({}, { ok: false, status: 503 }));
     await expect(search('test')).rejects.toThrow('Search failed: 503');
+  });
+});
+
+// ─── parseSections ────────────────────────────────────────────────────────────
+
+describe('parseSections', () => {
+  const article = [
+    'Intro paragraph that is the lead section.',
+    '',
+    '== History ==',
+    'History content here.',
+    '',
+    '=== Early years ===',
+    'Sub-section content stays inside History.',
+    '',
+    '== Legacy ==',
+    'Legacy content.',
+    '',
+    '== References ==',
+    'Citation 1. Citation 2.',
+  ].join('\n');
+
+  it('splits an article into its top-level sections', () => {
+    const sections = parseSections(article);
+    expect(sections.map(s => s.title)).toEqual(['History', 'Legacy']);
+  });
+
+  it('keeps subsection content within its parent section', () => {
+    const sections = parseSections(article);
+    const history = sections.find(s => s.title === 'History');
+    expect(history.content).toContain('Early years');
+    expect(history.content).toContain('Sub-section content');
+  });
+
+  it('drops boilerplate sections like References', () => {
+    const titles = parseSections(article).map(s => s.title);
+    expect(titles).not.toContain('References');
+  });
+
+  it('returns an empty array for empty or missing input', () => {
+    expect(parseSections('')).toEqual([]);
+    expect(parseSections(null)).toEqual([]);
+  });
+
+  it('drops sections that have no content', () => {
+    const sections = parseSections('Lead.\n\n== Empty ==\n\n== Real ==\nText.');
+    expect(sections.map(s => s.title)).toEqual(['Real']);
+  });
+});
+
+// ─── extractIntro ─────────────────────────────────────────────────────────────
+
+describe('extractIntro', () => {
+  it('returns text before the first section heading', () => {
+    expect(extractIntro('Lead text.\n\n== History ==\nMore.')).toBe('Lead text.');
+  });
+
+  it('returns the whole text when there are no headings', () => {
+    expect(extractIntro('Just a lead with no sections.')).toBe('Just a lead with no sections.');
+  });
+
+  it('returns empty string for falsy input', () => {
+    expect(extractIntro('')).toBe('');
+    expect(extractIntro(null)).toBe('');
+  });
+});
+
+// ─── getFullContent ───────────────────────────────────────────────────────────
+
+describe('getFullContent', () => {
+  it('returns the page extract on success', async () => {
+    fetch.mockReturnValue(mockResponse({
+      query: { pages: { '1': { extract: 'Lead.\n\n== History ==\nText.' } } },
+    }));
+    const text = await getFullContent('Python');
+    expect(text).toContain('== History ==');
+  });
+
+  it('returns null when the request is not ok', async () => {
+    fetch.mockReturnValue(mockResponse({}, { ok: false, status: 500 }));
+    expect(await getFullContent('Python')).toBeNull();
+  });
+
+  it('returns null when fetch itself throws (best-effort)', async () => {
+    fetch.mockRejectedValue(new TypeError('Failed to fetch'));
+    expect(await getFullContent('Python')).toBeNull();
   });
 });
 
@@ -264,6 +353,59 @@ describe('research', () => {
     expect(Array.isArray(result.related)).toBe(true);
     expect(result.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(result.query).toBe('Python programming');
+  });
+
+  it('enriches the result with real article sections from full content', async () => {
+    const fullText = [
+      'A much longer lead section than the short REST summary provides, with plenty of detail.',
+      '',
+      '== History ==',
+      'Detailed history content.',
+      '',
+      '== References ==',
+      'Citations.',
+    ].join('\n');
+
+    fetch
+      .mockReturnValueOnce(mockResponse(mwSearchResponse(['Python'])))            // search
+      .mockReturnValueOnce(mockResponse(restSummaryResponse('Python', 'Short.'))) // getSummary REST
+      .mockReturnValueOnce(mockResponse({                                         // getRelated
+        query: { pages: { '1': { links: [{ title: 'Guido van Rossum' }] } } },
+      }))
+      .mockReturnValueOnce(mockResponse({                                         // getFullContent
+        query: { pages: { '1': { extract: fullText } } },
+      }));
+
+    const result = await research('Python');
+    expect(result.sections.map(s => s.title)).toEqual(['History']); // References dropped
+    // Richer lead replaces the short REST summary
+    expect(result.extract).toContain('longer lead section');
+  });
+
+  it('still returns a result (no sections) when full content is unavailable', async () => {
+    fetch
+      .mockReturnValueOnce(mockResponse(mwSearchResponse(['Python'])))
+      .mockReturnValueOnce(mockResponse(restSummaryResponse('Python')))
+      .mockReturnValueOnce(mockResponse({ query: { pages: { '1': {} } } })) // related
+      .mockReturnValueOnce(mockResponse({}, { ok: false, status: 500 }));   // full content fails
+    const result = await research('Python');
+    expect(result.sections).toEqual([]);
+    expect(result.extract).toContain('long enough');
+  });
+
+  it('strips HTML markup from the REST displaytitle', async () => {
+    const restWithHtmlTitle = restSummaryResponse('1911 Revolution');
+    restWithHtmlTitle.displaytitle =
+      '<span lang="en" dir="ltr"><span class="mw-page-title-main">1911 Revolution</span></span>';
+
+    fetch
+      .mockReturnValueOnce(mockResponse(mwSearchResponse(['1911 Revolution'])))  // search
+      .mockReturnValueOnce(mockResponse(restWithHtmlTitle))                       // getSummary REST
+      .mockReturnValueOnce(mockResponse({ query: { pages: { '1': {} } } }));     // getRelated
+
+    const result = await research('1911 Revolution');
+    expect(result.displayTitle).toBe('1911 Revolution');
+    expect(result.displayTitle).not.toContain('<span');
   });
 
   it('throws NO_RESULTS when search returns empty array', async () => {
