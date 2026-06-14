@@ -189,7 +189,7 @@ export async function research(query) {
   return {
     query,
     title: summary.title || usedTitle,
-    displayTitle: summary.displaytitle || summary.title || usedTitle,
+    displayTitle: stripHTML(summary.displaytitle || summary.title || usedTitle),
     extract: summary.extract || stripHTML(usedSnippet),
     thumbnail: summary.thumbnail?.source || null,
     wikiUrl: summary.content_urls?.desktop?.page ||

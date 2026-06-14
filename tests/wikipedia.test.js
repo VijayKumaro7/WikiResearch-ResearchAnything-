@@ -266,6 +266,21 @@ describe('research', () => {
     expect(result.query).toBe('Python programming');
   });
 
+  it('strips HTML markup from the REST displaytitle', async () => {
+    const restWithHtmlTitle = restSummaryResponse('1911 Revolution');
+    restWithHtmlTitle.displaytitle =
+      '<span lang="en" dir="ltr"><span class="mw-page-title-main">1911 Revolution</span></span>';
+
+    fetch
+      .mockReturnValueOnce(mockResponse(mwSearchResponse(['1911 Revolution'])))  // search
+      .mockReturnValueOnce(mockResponse(restWithHtmlTitle))                       // getSummary REST
+      .mockReturnValueOnce(mockResponse({ query: { pages: { '1': {} } } }));     // getRelated
+
+    const result = await research('1911 Revolution');
+    expect(result.displayTitle).toBe('1911 Revolution');
+    expect(result.displayTitle).not.toContain('<span');
+  });
+
   it('throws NO_RESULTS when search returns empty array', async () => {
     fetch.mockReturnValue(mockResponse({ query: { search: [] } }));
     await expect(research('xkjhsdf2398')).rejects.toThrow('NO_RESULTS');
