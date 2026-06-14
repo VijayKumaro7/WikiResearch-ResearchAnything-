@@ -140,6 +140,81 @@ const WikipediaService = (() => {
   }
 
   /**
+   * Fetch the full plain-text article with section markers (== Heading ==).
+   * Best-effort: returns null on any failure so callers can degrade gracefully.
+   * @param {string} title
+   * @returns {Promise<string|null>}
+   */
+  async function getFullContent(title) {
+    const params = new URLSearchParams({
+      action: 'query',
+      titles: title,
+      prop: 'extracts',
+      explaintext: '1',
+      exsectionformat: 'wiki',
+      redirects: '1',
+      format: 'json',
+      origin: '*'
+    });
+    let res;
+    try {
+      res = await fetch(`${SEARCH_BASE}?${params}`);
+    } catch (_) {
+      return null;
+    }
+    if (!res || !res.ok) return null;
+    const data = await res.json();
+    const pages = Object.values(data.query?.pages || {});
+    return pages[0]?.extract || null;
+  }
+
+  // Section names that hold links/citations rather than informative prose.
+  const BOILERPLATE_SECTIONS =
+    /^(references|external links|see also|further reading|notes|citations|bibliography|sources|footnotes|works cited)$/i;
+
+  /**
+   * Split a full plain-text article (with `== Heading ==` markers) into real
+   * top-level sections. Subsection headings are kept inline within their parent.
+   * @param {string} fullText
+   * @returns {Array<{title: string, content: string}>}
+   */
+  function parseSections(fullText) {
+    if (!fullText) return [];
+    const sections = [];
+    let current = null;
+    for (const line of fullText.split('\n')) {
+      const m = line.match(/^(={2,6})\s*(.+?)\s*\1\s*$/);
+      if (m) {
+        const level = m[1].length;
+        const heading = m[2].trim();
+        if (level === 2) {
+          if (current && current.content.trim()) sections.push(current);
+          current = BOILERPLATE_SECTIONS.test(heading) ? null : { title: heading, content: '' };
+        } else if (current) {
+          current.content += `\n${heading}\n`;
+        }
+      } else if (current) {
+        current.content += line + '\n';
+      }
+    }
+    if (current && current.content.trim()) sections.push(current);
+    return sections
+      .map(s => ({ title: s.title, content: s.content.trim() }))
+      .filter(s => s.content.length > 0);
+  }
+
+  /**
+   * Extract the lead/intro text (everything before the first section heading).
+   * @param {string} fullText
+   * @returns {string}
+   */
+  function extractIntro(fullText) {
+    if (!fullText) return '';
+    const idx = fullText.search(/\n={2,6}\s/);
+    return (idx === -1 ? fullText : fullText.slice(0, idx)).trim();
+  }
+
+  /**
    * Main research function: orchestrates search + summary + related
    * Retries with alternate results if the top hit fails.
    * @param {string} query - User's question or topic
@@ -197,11 +272,27 @@ const WikipediaService = (() => {
       related = await getRelated(usedTitle || results[0].title);
     } catch (_) { /* related is optional */ }
 
+    // Step 4: Pull the full article (best-effort) for richer, section-by-section detail.
+    let sections = [];
+    let fullIntro = '';
+    try {
+      const fullText = await getFullContent(usedTitle || results[0].title);
+      if (fullText) {
+        sections = parseSections(fullText);
+        fullIntro = extractIntro(fullText);
+      }
+    } catch (_) { /* full content is optional — fall back to the summary */ }
+
+    // Prefer the fuller lead section when available, otherwise the short summary.
+    const summaryExtract = summary.extract || stripHTML(usedSnippet);
+    const extract = fullIntro.length > summaryExtract.length ? fullIntro : summaryExtract;
+
     return {
       query,
       title: summary.title || usedTitle,
       displayTitle: stripHTML(summary.displaytitle || summary.title || usedTitle),
-      extract: summary.extract || stripHTML(usedSnippet),
+      extract,
+      sections,
       thumbnail: summary.thumbnail?.source || null,
       wikiUrl: summary.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent((usedTitle || '').replace(/ /g, '_'))}`,
       related: related.slice(0, 10),
@@ -362,8 +453,8 @@ const UIController = (() => {
     // Summary
     els.summaryText.textContent = result.extract || 'No summary available.';
 
-    // Sections — render intelligently split paragraphs
-    renderSections(result.extract);
+    // Sections — render the article's real sections, or fall back to chunks
+    renderSections(result.sections, result.extract);
 
     // Related
     renderRelated(result.related);
@@ -372,41 +463,60 @@ const UIController = (() => {
     els.searchBtn.disabled = false;
   }
 
-  function renderSections(extract) {
-    if (!extract) { els.sectionsArea.innerHTML = ''; return; }
+  // Render one collapsible section card. `open` expands it by default.
+  function buildSectionCard(title, paragraphs, open) {
+    const card = document.createElement('div');
+    card.className = 'section-card';
 
-    // Split extract into sentences and group into logical "sections"
+    const btn = document.createElement('button');
+    btn.className = 'section-toggle';
+    btn.onclick = () => UIController.toggleSection(btn);
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'section-toggle-title';
+    titleSpan.textContent = title;          // textContent — never executes HTML
+    const icon = document.createElement('span');
+    icon.className = 'section-toggle-icon';
+    icon.textContent = open ? '−' : '+';
+    btn.appendChild(titleSpan);
+    btn.appendChild(icon);
+
+    const body = document.createElement('div');
+    body.className = 'section-body' + (open ? ' open' : '');
+    paragraphs.forEach(text => {
+      const p = document.createElement('p');
+      p.textContent = text;                 // textContent — never executes HTML
+      body.appendChild(p);
+    });
+
+    card.appendChild(btn);
+    card.appendChild(body);
+    return card;
+  }
+
+  function renderSections(sections, extract) {
+    els.sectionsArea.innerHTML = '';
+
+    // Preferred path: the article's real sections pulled from Wikipedia.
+    if (Array.isArray(sections) && sections.length) {
+      sections.forEach((sec, i) => {
+        const paragraphs = sec.content.split(/\n{1,}/).map(p => p.trim()).filter(Boolean);
+        els.sectionsArea.appendChild(buildSectionCard(sec.title, paragraphs, i === 0));
+      });
+      return;
+    }
+
+    // Fallback: no full content available — split the summary into labelled chunks.
+    if (!extract) return;
     const sentences = extract.match(/[^.!?]+[.!?]+/g) || [extract];
     const chunkSize = Math.ceil(sentences.length / Math.min(3, Math.ceil(sentences.length / 5)));
     const chunks = [];
     for (let i = 0; i < sentences.length; i += chunkSize) {
       chunks.push(sentences.slice(i, i + chunkSize).join(' ').trim());
     }
-
+    if (chunks.length <= 1) return;
     const labels = ['Overview', 'Background', 'Key Details', 'Further Context'];
-
-    if (chunks.length <= 1) { els.sectionsArea.innerHTML = ''; return; }
-
-    // Build section cards via DOM to avoid injecting raw extract text into innerHTML
-    els.sectionsArea.innerHTML = '';
     chunks.forEach((chunk, i) => {
-      const card = document.createElement('div');
-      card.className = 'section-card';
-
-      const btn = document.createElement('button');
-      btn.className = 'section-toggle';
-      btn.onclick = () => UIController.toggleSection(btn);
-      btn.innerHTML = `<span class="section-toggle-title">${escAttr(labels[i] || `Section ${i + 1}`)}</span><span class="section-toggle-icon">+</span>`;
-
-      const body = document.createElement('div');
-      body.className = 'section-body';
-      const p = document.createElement('p');
-      p.textContent = chunk;   // textContent — never executes HTML
-      body.appendChild(p);
-
-      card.appendChild(btn);
-      card.appendChild(body);
-      els.sectionsArea.appendChild(card);
+      els.sectionsArea.appendChild(buildSectionCard(labels[i] || `Section ${i + 1}`, [chunk], false));
     });
   }
 
@@ -486,11 +596,52 @@ const UIController = (() => {
 
   function getCurrentResult() { return currentResult; }
 
+  // Build a clean, print-optimised report into #print-area for "Save as PDF".
+  // Everything is added via textContent so API data can never inject markup.
+  function buildPrintDocument(result) {
+    const area = document.getElementById('print-area');
+    if (!area) return;
+    area.innerHTML = '';
+
+    const add = (tag, text, cls) => {
+      const el = document.createElement(tag);
+      if (cls) el.className = cls;
+      if (text != null) el.textContent = text;
+      area.appendChild(el);
+      return el;
+    };
+
+    add('h1', result.displayTitle || result.title, 'print-title');
+
+    const meta = add('p', null, 'print-meta');
+    meta.textContent = `Query: "${result.query}"  ·  Generated ${formatDate(result.timestamp)}`;
+    const src = add('p', null, 'print-source');
+    src.textContent = `Source: ${result.wikiUrl}`;
+
+    add('h2', 'Summary', 'print-h2');
+    add('p', result.extract || 'No summary available.', 'print-p');
+
+    if (Array.isArray(result.sections) && result.sections.length) {
+      result.sections.forEach(sec => {
+        add('h2', sec.title, 'print-h2');
+        sec.content.split(/\n{1,}/).map(p => p.trim()).filter(Boolean)
+          .forEach(par => add('p', par, 'print-p'));
+      });
+    }
+
+    if (Array.isArray(result.related) && result.related.length) {
+      add('h2', 'Related Topics', 'print-h2');
+      add('p', result.related.join(' · '), 'print-p');
+    }
+
+    add('p', 'Generated with WikiResearch · Content from Wikipedia (CC BY-SA)', 'print-footer');
+  }
+
   return {
     init, showLoading, showError, showEmpty,
     renderResult, renderHistoryList, renderSavedList,
     updateStats, getSearchQuery, setSearchQuery, getCurrentResult,
-    toggleSection
+    toggleSection, buildPrintDocument
   };
 })();
 
@@ -564,6 +715,14 @@ function removeSaved(title) {
   StorageService.removeFromSaved(title);
   UIController.renderSavedList();
   UIController.updateStats();
+}
+
+// Build a clean report and open the browser's print dialog ("Save as PDF").
+function downloadPDF() {
+  const result = UIController.getCurrentResult();
+  if (!result) return;
+  UIController.buildPrintDocument(result);
+  window.print();
 }
 
 function clearHistory() {

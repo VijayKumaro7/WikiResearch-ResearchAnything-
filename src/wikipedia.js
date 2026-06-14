@@ -135,6 +135,82 @@ export async function getSections(title) {
 }
 
 /**
+ * Fetch the full plain-text article with section markers (== Heading ==).
+ * Best-effort: returns null on any failure so callers can degrade gracefully.
+ * @param {string} title
+ * @returns {Promise<string|null>}
+ */
+export async function getFullContent(title) {
+  const params = new URLSearchParams({
+    action: 'query',
+    titles: title,
+    prop: 'extracts',
+    explaintext: '1',
+    exsectionformat: 'wiki',
+    redirects: '1',
+    format: 'json',
+    origin: '*'
+  });
+  let res;
+  try {
+    res = await fetch(`${SEARCH_BASE}?${params}`);
+  } catch (_) {
+    return null;
+  }
+  if (!res || !res.ok) return null;
+  const data = await res.json();
+  const pages = Object.values(data.query?.pages || {});
+  return pages[0]?.extract || null;
+}
+
+/** Section names that hold links/citations rather than informative prose. */
+const BOILERPLATE_SECTIONS =
+  /^(references|external links|see also|further reading|notes|citations|bibliography|sources|footnotes|works cited)$/i;
+
+/**
+ * Split a full plain-text article (with `== Heading ==` markers) into real
+ * top-level sections. Subsection headings are kept inline within their parent.
+ * Boilerplate and empty sections are dropped.
+ * @param {string} fullText
+ * @returns {Array<{title: string, content: string}>}
+ */
+export function parseSections(fullText) {
+  if (!fullText) return [];
+  const sections = [];
+  let current = null;
+  for (const line of fullText.split('\n')) {
+    const m = line.match(/^(={2,6})\s*(.+?)\s*\1\s*$/);
+    if (m) {
+      const level = m[1].length;
+      const heading = m[2].trim();
+      if (level === 2) {
+        if (current && current.content.trim()) sections.push(current);
+        current = BOILERPLATE_SECTIONS.test(heading) ? null : { title: heading, content: '' };
+      } else if (current) {
+        current.content += `\n${heading}\n`;
+      }
+    } else if (current) {
+      current.content += line + '\n';
+    }
+  }
+  if (current && current.content.trim()) sections.push(current);
+  return sections
+    .map(s => ({ title: s.title, content: s.content.trim() }))
+    .filter(s => s.content.length > 0);
+}
+
+/**
+ * Extract the lead/intro text (everything before the first section heading).
+ * @param {string} fullText
+ * @returns {string}
+ */
+export function extractIntro(fullText) {
+  if (!fullText) return '';
+  const idx = fullText.search(/\n={2,6}\s/);
+  return (idx === -1 ? fullText : fullText.slice(0, idx)).trim();
+}
+
+/**
  * Main research function: orchestrates search + summary + related with retry logic.
  * @param {string} query
  * @returns {Promise<Object>}
@@ -186,11 +262,27 @@ export async function research(query) {
     related = await getRelated(usedTitle || results[0].title);
   } catch (_) { /* related is optional */ }
 
+  // Pull the full article (best-effort) for richer, section-by-section detail.
+  let sections = [];
+  let fullIntro = '';
+  try {
+    const fullText = await getFullContent(usedTitle || results[0].title);
+    if (fullText) {
+      sections = parseSections(fullText);
+      fullIntro = extractIntro(fullText);
+    }
+  } catch (_) { /* full content is optional — fall back to the summary */ }
+
+  // Prefer the fuller lead section when available, otherwise the short summary.
+  const summaryExtract = summary.extract || stripHTML(usedSnippet);
+  const extract = fullIntro.length > summaryExtract.length ? fullIntro : summaryExtract;
+
   return {
     query,
     title: summary.title || usedTitle,
     displayTitle: stripHTML(summary.displaytitle || summary.title || usedTitle),
-    extract: summary.extract || stripHTML(usedSnippet),
+    extract,
+    sections,
     thumbnail: summary.thumbnail?.source || null,
     wikiUrl: summary.content_urls?.desktop?.page ||
       `https://en.wikipedia.org/wiki/${encodeURIComponent((usedTitle || '').replace(/ /g, '_'))}`,
@@ -199,5 +291,8 @@ export async function research(query) {
   };
 }
 
-const WikipediaService = { search, getSummary, getRelated, getSections, research, stripHTML };
+const WikipediaService = {
+  search, getSummary, getRelated, getSections, getFullContent,
+  parseSections, extractIntro, research, stripHTML
+};
 export default WikipediaService;
