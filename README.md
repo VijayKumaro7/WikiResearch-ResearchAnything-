@@ -39,23 +39,6 @@
 
 ---
 
-## 📋 Table of Contents
-
-1. [About the Project](#about-the-project)
-2. [Features](#features)
-3. [Tech Stack](#tech-stack)
-4. [Project Structure](#project-structure)
-5. [File Descriptions](#file-descriptions)
-6. [Architecture](#architecture)
-7. [How It Works](#how-it-works)
-8. [Quick Start](#quick-start)
-9. [Wikipedia API Details](#wikipedia-api-details)
-10. [Error Handling](#error-handling)
-11. [Deployment](#deployment)
-12. [Testing](#testing)
-13. [Resume Bullet Points](#resume-bullet-points)
-14. [Possible Extensions](#possible-extensions)
-15. [License](#license)
 
 ---
 
@@ -342,56 +325,6 @@ Both APIs are **free, public, and require no authentication.** Add `origin=*` fo
 
 ---
 
-## 🌍 Deployment
-
-The app is 100% static. Deploy the 3 files in `src/` anywhere.
-
-| Platform | Method |
-|----------|--------|
-| **GitHub Pages** | Push → Settings → Pages → `/src` folder |
-| **Netlify** | Drag `src/` to [app.netlify.com/drop](https://app.netlify.com/drop) |
-| **Vercel** | `vercel --prod` from `src/` directory |
-| **Any CDN** | Upload `index.html`, `styles.css`, `app.js` |
-
----
-
-## 🧪 Testing
-
-Paste in browser console (F12) for a quick smoke test:
-
-```js
-(async () => {
-  let pass = 0, fail = 0;
-  const check = (c, l) => c ? (console.log(`✅ ${l}`), pass++) : (console.error(`❌ ${l}`), fail++);
-
-  // Storage tests
-  StorageService.clearHistory();
-  const mockResult = { title: "Test", query: "test", wikiUrl: "https://en.wikipedia.org", timestamp: new Date().toISOString() };
-  StorageService.addToHistory(mockResult);
-  check(StorageService.getHistory().length === 1, 'addToHistory works');
-  StorageService.addToHistory(mockResult);
-  check(StorageService.getHistory().length === 1, 'No duplicates in history');
-  check(StorageService.saveArticle(mockResult) === true, 'saveArticle returns true');
-  check(StorageService.saveArticle(mockResult) === false, 'Duplicate save returns false');
-  check(StorageService.isSaved("Test") === true, 'isSaved works');
-  StorageService.removeFromSaved("Test");
-  check(StorageService.isSaved("Test") === false, 'removeFromSaved works');
-
-  console.log(`\n📊 ${pass} passed, ${fail} failed`);
-})();
-```
-
-Full test plan with 40+ cases: [`tests/test_plan.md`](./tests/test_plan.md)
-
----
-
-## 📝 Resume Bullet Points
-
-> Ready-to-use bullet points with value metrics for your resume or LinkedIn:
-
-**1.** Built a Wikipedia Research Assistant using Vanilla JS with a 3-layer architecture (Service/Storage/UI), integrating 2 REST APIs with dual-fallback logic, reducing search failure rate to ~0% across 40+ tested edge cases.
-
-**2.** Engineered a real-time data ingestion pipeline with zero dependencies, auto-retry on 3 candidate results, and localStorage persistence supporting 30-entry history — eliminating backend infrastructure entirely.
 
 ---
 
