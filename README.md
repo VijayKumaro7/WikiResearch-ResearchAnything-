@@ -1,359 +1,224 @@
-# 🔍 WikiResearch — AI-Powered Wikipedia Research Assistant
+<div align="center">
 
-> A clean, intelligent research tool that pulls real-time knowledge from Wikipedia. Ask any question, explore topics, save articles, and navigate knowledge — all from a single elegant interface. No backend. No API key. No build step.
+<img src="Docs/logo.svg" alt="WikiResearch logo" width="560" />
+
+<br/><br/>
+
+**An intelligent, zero-dependency research assistant powered by the Wikipedia API.**
+
+Ask any question in natural language and get structured, readable answers pulled live from Wikipedia — no backend, no API key, no build step.
 
 ![Version](https://img.shields.io/badge/version-1.0.0-gold)
-![Stack](https://img.shields.io/badge/stack-Vanilla%20JS%20%2B%20HTML%20%2B%20CSS-blue)
-![API](https://img.shields.io/badge/API-Wikipedia%20REST-orange)
+![Stack](https://img.shields.io/badge/stack-Vanilla%20JS%20·%20HTML5%20·%20CSS3-blue)
+![API](https://img.shields.io/badge/API-Wikipedia%20REST%20v1-orange)
+![Tests](https://img.shields.io/badge/tests-Vitest-6da55f)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![No Build](https://img.shields.io/badge/build-none%20required-lightgrey)
-![Zero Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen)
+
+[Overview](#overview) · [Features](#features) · [Screenshots](#screenshots) · [Quick Start](#quick-start) · [Architecture](#architecture) · [Testing](#testing) · [Documentation](#documentation)
+
+</div>
 
 ---
 
-## 📸 Screenshots
+## Overview
 
-### Welcome Screen
-![Welcome Screen](Docs/01_welcome.png)
-> *The welcome screen shows the sidebar with Quick Topics chips, live stats panel, and example query buttons to help users get started instantly.*
+**WikiResearch** is a pure front-end web application that turns Wikipedia into a personal research assistant. Type a question like *"How does CRISPR work?"* and the app searches Wikipedia, fetches the best-matching article, and presents it as a clean summary with collapsible sections, related topics, PDF export, and persistent history — all rendered in an elegant dark editorial interface.
 
-### Research Results
-![Results Page](Docs/03_results.png)
-> *A full result for "Artificial Intelligence" — Wikipedia badge, article title, Save/Wikipedia buttons, summary card with the full extract, and collapsible accordion sections below.*
+The project is deliberately framework-free. It demonstrates:
 
-### Accordion Sections Open
-![Section Open](Docs/04_section_open.png)
-> *Clicking any section header opens a collapsible accordion, breaking the article into readable Overview, Background, and Key Details sections.*
+- **Real-time API orchestration** — search → summary → related links, chained with `async/await` and `Promise.all`
+- **Resilient data fetching** — automatic retries across candidate articles and a dual-API fallback (REST v1 → MediaWiki Extracts)
+- **Clean layered architecture** — Data Service, Storage Service, and UI Controller separated without any framework
+- **Production-quality UI** — responsive dark theme, CSS animations, accessible states for loading, error, and empty views
+- **Automated testing** — 5 Vitest suites covering the API layer, storage, UI logic, security, and integration flows
 
-### Search History Tab
-![History Tab](Docs/06_history.png)
-> *The History tab shows all past searches with timestamps, original queries, and "Search Again" buttons. Stats update automatically.*
+## Features
 
-### Saved Articles Tab
-![Saved Tab](Docs/07_saved_tab.png)
-> *The Saved tab lists all bookmarked articles. Each card shows the title, date saved, and a Remove button.*
-
-### Mobile Responsive View
-![Mobile View](Docs/10_mobile.png)
-> *On 390px mobile viewport the layout collapses into a single-column view — sidebar moves to the top and all content remains fully usable.*
-
----
-
-
----
-
-## 🧠 About the Project
-
-**WikiResearch** is a portfolio-grade, pure frontend web application that lets users research any topic in natural language and get structured, readable answers pulled live from Wikipedia's public API.
-
-This project demonstrates:
-- **Real-time data ingestion** from a public REST API — no pre-built dataset needed
-- **Multi-endpoint API orchestration** — search → summary → related links in sequence
-- **Resilient error handling** with automatic retries and dual-API fallbacks
-- **Clean 3-layer software architecture** (Data Service → Storage → UI Controller) without any framework
-- **Modern vanilla JavaScript** — async/await, closures, IIFE module pattern, Promise.all
-- **Production-quality UI** — dark editorial theme, CSS animations, fully responsive
-
-Built as a **Data Analyst / Full-Stack Developer portfolio project** to showcase API integration, data pipeline thinking, and frontend engineering without relying on libraries or frameworks.
-
----
-
-## ✨ Features
-
-### Core Research Features
+### Research
 | Feature | Description |
 |---------|-------------|
-| 🔍 **Natural Language Search** | Ask full questions like "How does CRISPR work?" — not just keywords |
-| 📖 **Real-time Wikipedia Data** | Every search fetches fresh, live data directly from Wikipedia's REST API |
-| 🧠 **Smart Content Parsing** | Long article text is automatically split into labelled collapsible sections (Overview, Background, Key Details, Further Context) |
-| 🔗 **Related Topics** | Automatically surfaces up to 10 linked Wikipedia articles for deeper exploration |
-| 🌐 **Direct Wikipedia Link** | Every result includes an "Open on Wikipedia" button to the full article |
+| Natural language search | Ask full questions, not just keywords |
+| Live Wikipedia data | Every query fetches fresh content from Wikipedia's REST API |
+| Smart content parsing | Long extracts are split into labelled, collapsible sections (Overview, Background, Key Details) |
+| Related topics | Surfaces up to 10 linked articles for deeper exploration |
+| PDF export | Download any result as a print-ready report |
+| Direct source link | One-click access to the full article on Wikipedia |
 
-### Navigation & Organization
+### Organization
 | Feature | Description |
 |---------|-------------|
-| 📌 **Save Articles** | Bookmark any result to a persistent Saved list for later review |
-| 🕓 **Search History** | All searches stored locally in localStorage — nothing is ever lost |
-| 🗂️ **3-Tab Interface** | Dedicated tabs for Search, History, and Saved Articles |
-| ⚡ **Quick Topics** | Sidebar chip buttons for one-click searches on popular topics |
-| 💡 **Example Queries** | Welcome screen shows 3 clickable example queries for new users |
+| Saved articles | Bookmark results to a persistent reading list |
+| Search history | Every search stored locally (up to 30 entries) with one-click re-run |
+| Live session stats | Sidebar counters for queries, saved articles, and unique topics |
+| Quick topics | One-click chips for popular subjects (AI, Quantum, Climate, …) |
 
-### Statistics & UX
+### Reliability & UX
 | Feature | Description |
 |---------|-------------|
-| 📊 **Live Session Stats** | Sidebar shows live counts: queries, saved articles, unique topics explored |
-| ✅ **Saved Indicator** | Save button changes visual state when an article is already bookmarked |
-| 🔄 **Search Again** | History items are fully clickable — one click re-runs any past search |
-| 📱 **Responsive Design** | Full layout adapts for desktop (1440px), tablet (900px), and mobile (375px) |
-| ⌨️ **Keyboard Support** | Press Enter in the search box to trigger search |
+| Automatic retry | If the top result fails, the next two candidates are tried silently |
+| Dual API fallback | REST v1 summaries fall back to the MediaWiki Extracts API — a result is always returned |
+| Specific error messages | Distinct handling for no results, network failure, and `file://` CORS issues |
+| Fully responsive | Adapts from 1440px desktop down to 375px mobile |
+| Keyboard support | Press Enter to search |
 
-### Robustness
-| Feature | Description |
-|---------|-------------|
-| 🔁 **Automatic Retry** | If the top search result fails (redirect, 404), automatically tries the next 2 candidates |
-| 🛡️ **Dual API Fallback** | Primary: Wikipedia REST API. Fallback: MediaWiki Extracts API. Always returns something |
-| 💬 **Smart Error Messages** | Specific messages for: no results, network failure, file:// errors, article not found |
-| 🌐 **Snippet Fallback** | If no extract is available, uses search snippet text — results never show blank |
+## Screenshots
 
----
+| Welcome | Results |
+|---|---|
+| ![Welcome Screen](Docs/01_welcome.png) | ![Results Page](Docs/03_results.png) |
 
-## 🛠️ Tech Stack
+| Collapsible Sections | Search History |
+|---|---|
+| ![Section Open](Docs/04_section_open.png) | ![History Tab](Docs/06_history.png) |
 
-| Layer | Technology | Why Chosen |
-|-------|-----------|------------|
-| **Structure** | HTML5 | Semantic, accessible, no transpiling needed |
-| **Styling** | CSS3 (Custom Properties, Grid, Flexbox, Animations) | Full power, zero preprocessors |
-| **Logic** | Vanilla JavaScript ES2020 | No overhead; demonstrates pure JS architecture skills |
-| **Fonts** | Google Fonts | Playfair Display · IBM Plex Mono · Source Serif 4 |
-| **Data Source** | Wikipedia REST API v1 + MediaWiki API | Free, public, no auth, CORS-enabled |
-| **Persistence** | Browser localStorage | Zero-dependency client-side storage |
-| **Build System** | None | Open index.html and it works |
-| **Dependencies** | Zero | No npm, no webpack, no React, no jQuery |
+| Saved Articles | Mobile (390px) |
+|---|---|
+| ![Saved Tab](Docs/07_saved_tab.png) | ![Mobile View](Docs/10_mobile.png) |
 
----
+## Quick Start
 
-## 📁 Project Structure
+No dependencies or build step are required to run the app — only a local HTTP server.
 
-```
-wikipedia-research-assistant/
-│
-├── 📄 README.md                        ← Full project documentation (this file)
-│
-├── src/                                ← All source files — serve this directory
-│   ├── index.html                      ← Main HTML shell and UI structure
-│   ├── styles.css                      ← Complete stylesheet, zero preprocessors
-│   └── app.js                          ← All logic: Services + UI Controller + App
-│
-├── Docs/                               ← Documentation and visual assets
-│   ├── 01_welcome.png                  ← Welcome / empty state
-│   ├── 03_results.png                  ← Full result for Artificial Intelligence
-│   ├── 04_section_open.png             ← Accordion section expanded
-│   ├── 06_history.png                  ← History tab with entries
-│   ├── 07_saved_tab.png                ← Saved articles tab
-│   └── 10_mobile.png                   ← Mobile responsive (390px)
-│
-├── tests/
-│   └── test_plan.md                    ← 40+ test cases + console smoke test script
-│
-└── public/                             ← Reserved for static assets
+```bash
+git clone https://github.com/VijayKumaro7/WikiResearch-ResearchAnything-.git
+cd WikiResearch-ResearchAnything-
+
+# Option 1 — Python
+python -m http.server 3000
+# then open http://localhost:3000
+
+# Option 2 — Node.js
+npx serve .
+
+# Option 3 — VS Code
+# Right-click index.html → "Open with Live Server"
 ```
 
----
+> **Note:** Opening `index.html` directly via double-click uses the `file://` protocol, which blocks Wikipedia's API due to CORS. Always serve over HTTP.
 
-## 📄 File Descriptions
-
-### `src/index.html` — Application Shell
-
-The main HTML file that defines the complete UI skeleton, structured as:
-
-- **`<head>`** — Charset, viewport meta, Google Fonts links, and link to `styles.css`
-- **Background decorations** — `.bg-grid` (CSS dot grid overlay) and two `.bg-orb` elements (animated amber and blue glows)
-- **`.sidebar`** — Fixed left panel with logo, navigation tabs (Search/History/Saved), live stats grid, quick topic chip buttons, and footer
-- **`.main-content`** — Right scrollable area containing 3 tab panels:
-  - **`#tab-search`** — Search bar, loading spinner state, error state, results area with summary + accordion sections + related chips, and empty/welcome state
-  - **`#tab-history`** — Dynamically populated from localStorage
-  - **`#tab-saved`** — Dynamically populated from localStorage
-
----
-
-### `src/styles.css` — Complete Stylesheet
-
-Single self-contained CSS file (~360 lines). Key sections:
-
-| Section | Contents |
-|---------|----------|
-| **CSS Variables** | All design tokens: `--ink`, `--accent` gold, `--blue`, font stacks, radii, transitions |
-| **Background** | `.bg-grid` grid pattern, `.bg-orb` floating glows with `orbFloat` animation |
-| **App Layout** | Fixed sidebar + scrollable main content via Flexbox |
-| **States** | Loading (3-ring `spin` animation), Error panel, Empty state with `pulse` rings |
-| **Results** | Summary card with `::before` quote decoration, `fadeUp` entrance, accordion |
-| **Responsive** | `@media (max-width: 900px)` tablet, `@media (max-width: 640px)` mobile |
-
-**Design language:** Editorial Dark — `#0d0d0f` ink, `#d4a84b` gold accent, Playfair Display serif.
-
----
-
-### `src/app.js` — All Application Logic
-
-~510 lines organized into 3 IIFE modules + global entry-point functions:
-
-#### `WikipediaService` — Data Layer
-Handles all HTTP communication. No API key required.
-
-| Method | API Called | Returns |
-|--------|-----------|---------|
-| `search(query)` | `GET /w/api.php?action=query&list=search` | `[{title, snippet, pageid}]` |
-| `getSummary(title)` | `GET /api/rest_v1/page/summary/{title}` (+ MediaWiki fallback) | `{title, extract, thumbnail, url}` |
-| `getRelated(title)` | `GET /w/api.php?action=query&prop=links` | `string[]` of linked titles |
-| `research(query)` | Orchestrates all 3 above | Complete `ResearchResult` object |
-
-**Resilience built-in:** `research()` retries up to 3 candidates if the first fails; `getSummary()` auto-falls back to MediaWiki Extracts API; `getRelated()` failure is silently caught.
-
-#### `StorageService` — Persistence Layer
-Wraps `localStorage` with typed methods:
-
-| Method | Key | What It Does |
-|--------|-----|-------------|
-| `addToHistory(result)` | `wiki_history` | Prepends; removes duplicates; trims to 30 max |
-| `saveArticle(result)` | `wiki_saved` | Adds if not duplicate; returns `true`/`false` |
-| `isSaved(title)` | `wiki_saved` | Boolean — drives Save button visual state |
-| `removeFromSaved(title)` | `wiki_saved` | Filters by title and writes back |
-
-#### `UIController` — View Layer
-All DOM operations. Binds elements once in `init()`, operates on cached refs.
-
-| Method | What It Renders |
-|--------|----------------|
-| `showState(state)` | Shows one of 4 panels (loading/error/results/empty), hides others |
-| `renderResult(result)` | Title, Save button, summary card, accordion sections, related chips |
-| `renderSections(text)` | Splits extract into 2–3 collapsible accordion groups |
-| `renderHistoryList()` | History cards from localStorage |
-| `renderSavedList()` | Saved article cards from localStorage |
-| `updateStats()` | Recalculates sidebar Queries / Saved / Topics numbers |
-
----
-
-### `docs/ARCHITECTURE.md`
-Full ASCII system diagram, module responsibility table, complete data flow walkthrough, Wikipedia API endpoint reference, and localStorage schema with example JSON.
-
-### `docs/API_REFERENCE.md`
-JSDoc-style docs for every public method — parameters, return types, code examples, Wikipedia endpoints used, and error codes table.
-
-### `docs/SETUP.md`
-Step-by-step for Python/Node/VS Code local server, why `file://` fails, language switching, deployment to GitHub Pages/Netlify/Vercel, browser compatibility, and troubleshooting.
-
-### `tests/test_plan.md`
-40+ manual test cases across: search flow, navigation, saving, stats, responsive viewports, network conditions, edge cases (Unicode, XSS, empty input). Includes a paste-and-run console smoke test script.
-
----
-
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                       BROWSER (Client-side only)                 │
+│                      BROWSER (client-side only)                  │
 │                                                                  │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐   │
-│  │ WikipediaService │  │  StorageService  │  │ UIController │   │
-│  │  (Data Layer)    │  │  (Persistence)   │  │ (View Layer) │   │
-│  │                  │  │                  │  │              │   │
-│  │  search()        │  │  getHistory()    │  │ init()       │   │
-│  │  getSummary()    │  │  addToHistory()  │  │ showState()  │   │
-│  │  getRelated()    │  │  saveArticle()   │  │ render*()    │   │
-│  │  research() ─────┼──┼──────────────────┼──▶ update*()   │   │
-│  └────────┬─────────┘  └──────────────────┘  └──────────────┘   │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐    │
+│  │ WikipediaService │  │  StorageService  │  │ UIController │    │
+│  │   (data layer)   │  │  (persistence)   │  │ (view layer) │    │
+│  │                  │  │                  │  │              │    │
+│  │  search()        │  │  getHistory()    │  │ showState()  │    │
+│  │  getSummary()    │  │  addToHistory()  │  │ render*()    │    │
+│  │  getRelated()    │  │  saveArticle()   │  │ updateStats()│    │
+│  │  research() ─────┼──┼──────────────────┼──▶              │    │
+│  └────────┬─────────┘  └──────────────────┘  └──────────────┘    │
 │           │                                                      │
-│           │            Global: handleSearch() · quickSearch()    │
 └───────────┼──────────────────────────────────────────────────────┘
-            │  HTTPS + CORS (origin: '*')
+            │  HTTPS + CORS (origin=*)
             ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│  Wikipedia REST API v1          MediaWiki Action API             │
-│  /api/rest_v1/page/summary      /w/api.php?action=query          │
-│  (primary summaries)            (search + related + fallback)    │
+│  Wikipedia REST API v1              MediaWiki Action API         │
+│  /api/rest_v1/page/summary          /w/api.php?action=query      │
+│  (primary summaries)                (search · related · fallback)│
 └──────────────────────────────────────────────────────────────────┘
 ```
 
----
+**Lifecycle of a search** — `"How does machine learning work?"`:
 
-## ⚙️ How It Works
+1. `handleSearch()` fires and the loading state is shown
+2. `WikipediaService.research()` finds the top 5 candidate articles, fetches the best summary (retrying up to 3 candidates), and loads related links in parallel
+3. `StorageService.addToHistory()` persists the result to `localStorage`
+4. `UIController.renderResult()` renders the summary card, accordion sections, and related-topic chips
+5. Sidebar statistics update automatically
 
-Complete lifecycle of a single search — `"How does machine learning work?"`:
+## Project Structure
 
 ```
-1. User types query → presses Enter → handleSearch() fires
-2. UIController.showLoading() — spinner appears
-3. WikipediaService.research(query)
-   ├── search()        → finds top 5 candidate articles
-   ├── getSummary()    → fetches extract + URL (retries up to 3 candidates)
-   └── getRelated()    → fetches linked titles in background
-4. StorageService.addToHistory(result) → saved to localStorage
-5. UIController.renderResult(result)
-   ├── Summary card (full extract text)
-   ├── Collapsible sections (Overview, Background, Key Details)
-   └── Related topic chips
-6. UIController.updateStats() → sidebar numbers update
+WikiResearch-ResearchAnything-/
+├── index.html              # Application shell and UI structure
+├── styles.css              # Complete stylesheet — design tokens, layout, animations
+├── app.js                  # Browser bundle: Services + UI Controller + entry points
+│
+├── src/                    # ES modules (mirrors app.js, used by the test suite)
+│   ├── wikipedia.js        # WikipediaService — search, summary, related, research
+│   ├── storage.js          # StorageService — history and saved-article persistence
+│   └── ui-logic.js         # Pure UI helpers — section chunking, stats, formatting
+│
+├── tests/                  # Vitest suites
+│   ├── wikipedia.test.js   # API layer: fetching, retries, fallbacks
+│   ├── storage.test.js     # Persistence: history caps, dedupe, save/remove
+│   ├── ui-logic.test.js    # Section splitting and stat computation
+│   ├── security.test.js    # XSS and HTML-injection hardening
+│   └── integration.test.js # End-to-end search flows
+│
+├── Docs/                   # Screenshots and logo assets
+├── ARCHITECTURE.md         # System diagram, data flow, localStorage schema
+├── API_REFERENCE.md        # Method-level documentation for every service
+├── SETUP.md                # Local server options, deployment, troubleshooting
+└── test_plan.md            # 40+ manual test cases and a console smoke test
 ```
 
----
+## Tech Stack
 
-## 🚀 Quick Start
+| Layer | Technology | Rationale |
+|-------|-----------|-----------|
+| Structure | HTML5 | Semantic and accessible, no transpiling |
+| Styling | CSS3 (custom properties, Grid, Flexbox) | Full design control, zero preprocessors |
+| Logic | Vanilla JavaScript (ES2020) | Demonstrates pure JS architecture skills |
+| Data | Wikipedia REST API v1 + MediaWiki API | Free, public, CORS-enabled, no auth |
+| Persistence | `localStorage` | Zero-dependency client-side storage |
+| Testing | Vitest + jsdom | Fast unit and integration tests for the ES modules |
+| Build | None | Serve the folder and it runs |
 
-### Option 1 — Python (Recommended, no install needed)
+## Testing
+
+The runtime app has zero dependencies; dev dependencies are used only for the test suite.
 
 ```bash
-git clone https://github.com/yourusername/wikipedia-research-assistant.git
-cd wikipedia-research-assistant/src
-python -m http.server 3000
-# Open: http://localhost:3000
+npm install
+npm test              # run all suites once
+npm run test:watch    # watch mode
+npm run test:coverage # coverage report
 ```
 
-### Option 2 — Node.js
+## Error Handling
 
-```bash
-cd wikipedia-research-assistant/src
-npx serve .
-```
+| Scenario | Behavior |
+|----------|----------|
+| No Wikipedia matches | "No articles found" message with a retry prompt |
+| Network down / DNS failure | Explains the problem and warns about `file://` usage |
+| Article redirect or 404 | Silent retry with the next search candidate |
+| All candidates fail | Falls back to the search snippet — results are never blank |
+| Related-links failure | Caught silently; the section is simply omitted |
 
-### Option 3 — VS Code Live Server
-Right-click `src/index.html` → **Open with Live Server**
+## Documentation
 
-> ⚠️ **Do not open `index.html` by double-clicking.** The `file://` protocol blocks Wikipedia's API via CORS. Always use a local HTTP server.
+- [ARCHITECTURE.md](ARCHITECTURE.md) — full system diagram, module responsibilities, and data-flow walkthrough
+- [API_REFERENCE.md](API_REFERENCE.md) — JSDoc-style reference for every public method
+- [SETUP.md](SETUP.md) — local development, deployment (GitHub Pages / Netlify / Vercel), and troubleshooting
+- [test_plan.md](test_plan.md) — manual test cases across search, navigation, responsiveness, and edge cases
 
----
+## Roadmap
 
-## 🔌 Wikipedia API Details
+- [ ] Multi-language Wikipedia support (ES, HI, FR, …)
+- [ ] Light/dark theme toggle
+- [ ] Voice search via the Web Speech API
+- [ ] AI-powered summarization of extracts
+- [ ] Offline reading with a Service Worker
 
-| API | Base URL | Used For |
-|-----|----------|---------|
-| REST API v1 | `en.wikipedia.org/api/rest_v1` | Article summaries (primary) |
-| MediaWiki API | `en.wikipedia.org/w/api.php` | Search, related links, summary fallback |
+## License
 
-Both APIs are **free, public, and require no authentication.** Add `origin=*` for CORS.
+Released under the [MIT License](https://opensource.org/licenses/MIT) — free to use, modify, and distribute.
 
----
+## Author
 
-## 🛡️ Error Handling
+**Vijay Kumar** — Data Analyst & Full-Stack Developer
 
-| Scenario | Detection | User Message |
-|----------|-----------|--------------|
-| No Wikipedia matches | `Error('NO_RESULTS')` | "No articles found. Try rephrasing." |
-| Network down / DNS fail | `err instanceof TypeError` | "Could not reach Wikipedia. Use a local server, not file://." |
-| Article redirect / 404 | Caught in retry loop | Silent retry — user never sees this |
-| All 3 candidates fail | Falls through | Uses search snippet text — never blank |
-| `getRelated()` fails | Silent catch | Related section simply absent |
-
----
-
-
----
-
-## 🔮 Possible Extensions
-
-| Extension | Difficulty | Description |
-|-----------|------------|-------------|
-| 🌐 Multi-language Wikipedia | Easy | Switch between language editions (ES, HI, FR...) |
-| 🌙 Light/Dark mode toggle | Easy | CSS variable swap for theme switching |
-| 📤 Export to PDF | Medium | `window.print()` or jsPDF for saving articles |
-| 🎤 Voice search | Medium | Web Speech API for microphone input |
-| 🤖 AI Summarizer | Hard | Claude/OpenAI API to condense Wikipedia extracts |
-| 🔔 Offline mode | Hard | Service Worker + Cache API for offline reading |
+[![GitHub](https://img.shields.io/badge/GitHub-VijayKumaro7-181717?logo=github)](https://github.com/VijayKumaro7)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-vijay--kumar070-0A66C2?logo=linkedin)](https://www.linkedin.com/in/vijay-kumar070/)
+[![Portfolio](https://img.shields.io/badge/Portfolio-vijayportfolio07-d4a84b)](https://vijayportfolio07.netlify.app/)
 
 ---
 
-## 📜 License
-
-MIT License — free to use, modify, and distribute.
-
----
-
-## 👤 Author
-
-**Vijay** — Aspiring Data Analyst & Full-Stack Developer
-- GitHub: [VijayKumaro7](https://github.com/VijayKumaro7)
-- LinkedIn: *[https://www.linkedin.com/in/vijay-kumar070/]*
-- Portfolio: *[https://vijayportfolio07.netlify.app/]*
-
----
-
-*WikiResearch — Research anything. Understand everything.*
+<div align="center">
+<em>WikiResearch — Research anything. Understand everything.</em>
+</div>
